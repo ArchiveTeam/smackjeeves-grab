@@ -52,7 +52,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20201226.01'
+VERSION = '20201226.02'
 USER_AGENT = 'Archive Team'
 TRACKER_ID = 'smackjeeves'
 TRACKER_HOST = 'trackerproxy.archiveteam.org'
@@ -195,19 +195,19 @@ class WgetArgs(object):
         if item_type == "comic":
             wget_args.extend(['--warc-header', 'smackjeeves-comic: ' + item_value])
             
-            wget_args.append('https://resources.smackjeeves.com/js/articleDetailApp/app.1.0.0.min.js')
-            wget_args.append('https://resources.smackjeeves.com/css/main.v01.css')
-            wget_args.append('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')
-            wget_args.append('https://www.googletagmanager.com/gtag/js?id=UA-122461178-')
-            #wget_args.append('https://www.google-analytics.com/analytics.js')
-            wget_args.append('https://resources.smackjeeves.com/js/commentApp/app.1.0.0.min.js')
-            wget_args.append('https://fonts.googleapis.com/css?family=Hind:400,600,700')
-            wget_args.append('https://resources.smackjeeves.com/js/articleListApp/app.2.0.0.min.js')
-            wget_args.append('https://resources.smackjeeves.com/js/cmn/vendor/jquery-2.2.4.min.js')
-            wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-back-white.png?1561966152')
-            wget_args.append('https://resources.smackjeeves.com/img/icon/icon-comment-white.png?1570429639')
-            wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-forward-white-double.png?1570429638')
-            wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-back-white-double.png?1570429638')
+            # Debug
+            #wget_args.append('https://resources.smackjeeves.com/js/articleDetailApp/app.1.0.0.min.js')
+            #wget_args.append('https://resources.smackjeeves.com/css/main.v01.css')
+            #wget_args.append('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')
+            #wget_args.append('https://www.googletagmanager.com/gtag/js?id=UA-122461178-')
+            #wget_args.append('https://resources.smackjeeves.com/js/commentApp/app.1.0.0.min.js')
+            #wget_args.append('https://fonts.googleapis.com/css?family=Hind:400,600,700')
+            #wget_args.append('https://resources.smackjeeves.com/js/articleListApp/app.2.0.0.min.js')
+            #wget_args.append('https://resources.smackjeeves.com/js/cmn/vendor/jquery-2.2.4.min.js')
+            #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-back-white.png?1561966152')
+            #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-comment-white.png?1570429639')
+            #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-forward-white-double.png?1570429638')
+            #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-back-white-double.png?1570429638')
 
             
             wget_args.append('https://www.smackjeeves.com/discover/articleList?titleNo={}'.format(item_value))

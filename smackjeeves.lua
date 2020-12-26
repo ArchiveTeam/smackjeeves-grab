@@ -27,6 +27,7 @@ local pages_covered = {}
 
 for ignore in io.open("ignore-list", "r"):lines() do
   downloaded[ignore] = true
+  downloaded[string.gsub(ignore, '^https', 'http', 1)] = true
 end
 
 read_file = function(file)
@@ -46,8 +47,29 @@ allowed = function(url, parenturl)
     or string.match(url, "^https?://www%.smackjeeves%.com/api/comments/delete")
     or string.match(url, "^https?://www%.smackjeeves%.com/api/comments/good")
     or string.match(url, "^https?://www%.smackjeeves%.com/api/comments/articleGood")
-    or string.match(url, "^https?://(www%.smackjeeves%.com/login")
-    or string.match(url, "^https?://(www%.smackjeeves%.com/search")then
+    or string.match(url, "^https?://www%.smackjeeves%.com/login")
+    or string.match(url, "^https?://www%.smackjeeves%.com/search")
+    or string.match(url, "^https?://resources%.smackjeeves%.com/js/")
+    or string.match(url, "^https?://www%.smackjeeves%.com/api/favorite/")
+    or string.match(url, "^https?://www%.smackjeeves%.com/discover%?type=")
+    or string.match(url, "^https?://www%.smackjeeves%.com/bookshelf")
+    or string.match(url, "^https?://www%.smackjeeves%.com/comment/report")
+    or string.match(url, "^https?://www%.smackjeeves%.com/settings")
+    or string.match(url, "^https?://www%.smackjeeves%.com/author/%d+") then
+    return false
+  end
+  
+  -- These ARE downloaded, but it must be a post request, so anything that calls allowed() shouldn't GET it
+  if url == 'https://www.smackjeeves.com/api/comments/get' then
+    return false
+  end
+  
+  -- Do not match article lists for comics other than the one in the item
+  if (string.match(url, '^https?://www%.smackjeeves%.com/discover/articleList%?titleNo=%d+$')
+    or string.match(url, '^https?://www%.smackjeeves%.com/articleList%?titleNo=%d+$'))
+    and url ~= "https://www.smackjeeves.com/discover/articleList?titleNo=" .. item_value
+    and url ~= "https://www.smackjeeves.com/articleList?titleNo=" .. item_value
+    and item_type == "comic" then
     return false
   end
 
@@ -64,10 +86,10 @@ allowed = function(url, parenturl)
 
   if string.match(url, "^https?://www%.smackjeeves%.com/")
   or string.match(url, "^https?://api%.smackjeeves%.com/")
-  or string.match(url, "^https?://images%.smackjeeves%.com/")
-  or string.match(url, "^https?://resources%.smackjeeves%.com/") then
+  or string.match(url, "^https?://images%.smackjeeves%.com/") then
     return true
   end
+  -- I have taken out resources. - seemed to be entirely statuc, and a lot of bad extraction was happening for that
 
   return false
 end
@@ -79,6 +101,15 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return true
   end
   ]]
+  local url = urlpos["url"]["url"]
+  if downloaded[url] == true or addedtolist[url] == true then
+    return false
+  end
+  if allowed(url) then
+    addedtolist[url] = true
+    return true
+  end
+  
   return false
 end
 
@@ -211,14 +242,14 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
     
     -- For whatever reason, when you click the forward/next buttons, it goes to one of the pages (without /discover/) that are queued as follows, which just redirects to the /discover/details page
-    check("https://www.smackjeeves.com/detail?titleNo=" .. item_value .. "&articleNo=" .. pagenum)
+    check("https://www.smackjeeves.com/detail?titleNo=" .. item_value .. "&articleNo=" .. pagenum, true)
     
     local at_least_one_img_captured = false
     -- https://www.smackjeeves.com/discover/detail?titleNo=179756&articleNo=66 is a page with multiple images
     for image in string.gmatch(html, "'(https?://images%.smackjeeves%.com/[^']+/dims/optimize)'") do
-      check(image)
+      check(image, true)
       unoptimized_image = string.match(image, "^(https?://images%.smackjeeves%.com/[^']+)/dims/optimize$")
-      check(unoptimized_image)
+      check(unoptimized_image, true)
       at_least_one_img_captured = true
     end
     if not at_least_one_img_captured then
@@ -228,18 +259,18 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     
     -- Author profile picture & "recommended for you" covers
     for image in string.gmatch(html, 'background%-image:%s*url%(([^)(<>"]+)%)') do
-        check(image)
+        check(image, true)
     end
     
     -- Separate comments page
-    check("https://www.smackjeeves.com/comment/" .. item_value .. "/" .. pagenum)
+    check("https://www.smackjeeves.com/comment/" .. item_value .. "/" .. pagenum, true)
     -- Comments API requests
     queue_comment_api_page(pagenum)
     
     -- Just in case the article list isn't comprehensive for whatever reason...
     if pagenum ~= "1" then
         local prevpn = tostring(tonumber(pagenum) - 1)
-        check("https://www.smackjeeves.com/discover/detail?titleNo=" .. item_value .. "&articleNo=" .. prevpn)
+        check("https://www.smackjeeves.com/discover/detail?titleNo=" .. item_value .. "&articleNo=" .. prevpn, true)
     end
   end
   
@@ -258,8 +289,8 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     html = read_file(file)
     local json = JSON:decode(html)
     for i, v in pairs(json["result"]["list"]) do
-      check(v["articleUrl"])
-      check(v["imgUrl"])
+      check(v["articleUrl"], true)
+      check(v["imgUrl"], true)
     end
   end
   
@@ -268,17 +299,13 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     html = read_file(file)
     local json = JSON:decode(html)
     for i, v in pairs(json["result"]["list"]) do
-      check(v["imgUrl"])
+      check(v["imgUrl"], true)
     end
   end
   
 
-  --[[if allowed(url, nil) and status_code == 200 then
+  if allowed(url, nil) and status_code == 200 and not string.match(url, '^https?://images%.smackjeeves%.com') then
     html = read_file(file)
-    if string.match(html, '<h1 class="maintenance__title">URL not found</h1>') then
-      -- TODO
-      print("NF")
-    end
     for newurl in string.gmatch(string.gsub(html, "&quot;", '"'), '([^"]+)') do
       checknewurl(newurl)
     end
@@ -297,7 +324,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     for newurl in string.gmatch(html, ":%s*url%(([^%)]+)%)") do
       checknewurl(newurl)
     end
-  end]]
+  end
 
   return urls
 end
