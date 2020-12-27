@@ -1,2 +1,0 @@
-voat.co	FALSE	/	FALSE	1640129347	NotFirstTime	1
-voat.co	FALSE	/	FALSE	1640196909	NSFWEnabled	1

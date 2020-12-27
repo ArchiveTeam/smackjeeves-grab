@@ -52,7 +52,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20201226.03'
+VERSION = '20201226.04'
 USER_AGENT = 'Archive Team'
 TRACKER_ID = 'smackjeeves'
 TRACKER_HOST = 'trackerproxy.archiveteam.org'
@@ -160,7 +160,6 @@ class WgetArgs(object):
             WGET_AT,
             '-U', USER_AGENT,
             '-nv',
-            '--load-cookies', 'cookies.txt',
             '--content-on-error',
             '--lua-script', 'smackjeeves.lua',
             '-o', ItemInterpolation('%(item_dir)s/wget.log'),
