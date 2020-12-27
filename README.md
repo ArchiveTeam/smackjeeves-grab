@@ -125,7 +125,7 @@ This supposedly fixes it:
 Ensure that you have the Arch equivalent of bzip2 installed as well.
 
 1. Make sure you have `python2-pip` installed.
-2. Install [the wget-lua package from the AUR](https://aur.archlinux.org/packages/wget-lua/). 
+2. Install [the wget-lua package from the AUR](https://aur.archlinux.org/packages/wget-lua/).
 3. Run `pip2 install --upgrade seesaw`.
 4. Modify the run-pipeline script in seesaw to point at `#!/usr/bin/python2` instead of `#!/usr/bin/python`.
 5. `useradd --system --group users --shell /bin/bash --create-home archiveteam`
@@ -185,6 +185,6 @@ Are you a developer? Help write code for us! Look at our [developer documentatio
 
 ### Other problems
 
-Have an issue not listed here? Join us on IRC and ask! We can be found at hackint IRC [#archiveteam-bs](https://webirc.hackint.org/#irc://irc.hackint.org/#archiveteam).
+Have an issue not listed here? Join us on IRC and ask! We can be found at hackint IRC [#archiveteam-bs](https://webirc.hackint.org/#irc://irc.hackint.org/#archiveteam-bs).
 
 

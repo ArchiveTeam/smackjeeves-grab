@@ -58,12 +58,12 @@ allowed = function(url, parenturl)
     or string.match(url, "^https?://www%.smackjeeves%.com/author/%d+") then
     return false
   end
-  
+
   -- These ARE downloaded, but it must be a post request, so anything that calls allowed() shouldn't GET it
   if url == 'https://www.smackjeeves.com/api/comments/get' then
     return false
   end
-  
+
   -- Do not match article lists for comics other than the one in the item
   if (string.match(url, '^https?://www%.smackjeeves%.com/discover/articleList%?titleNo=%d+$')
     or string.match(url, '^https?://www%.smackjeeves%.com/articleList%?titleNo=%d+$'))
@@ -85,8 +85,8 @@ allowed = function(url, parenturl)
   end]]
 
   if string.match(url, "^https?://www%.smackjeeves%.com/")
-  or string.match(url, "^https?://api%.smackjeeves%.com/")
-  or string.match(url, "^https?://images%.smackjeeves%.com/") then
+    or string.match(url, "^https?://api%.smackjeeves%.com/")
+    or string.match(url, "^https?://images%.smackjeeves%.com/") then
     return true
   end
   -- I have taken out resources. - seemed to be entirely statuc, and a lot of bad extraction was happening for that
@@ -109,14 +109,14 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     addedtolist[url] = true
     return true
   end
-  
+
   return false
 end
 
 wget.callbacks.get_urls = function(file, url, is_css, iri)
   local urls = {}
   local html = nil
-  
+
   downloaded[url] = true
 
   local function check(urla, force)
@@ -180,41 +180,45 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   end
 
   -- Main comic page
-  if url == "https://www.smackjeeves.com/discover/articleList?titleNo=" .. item_value and item_type == "comic" and status_code == 200 then
+  if url == "https://www.smackjeeves.com/discover/articleList?titleNo=" .. item_value
+    and item_type == "comic"
+    and status_code == 200 then
     html = read_file(file)
-    
+
     if string.match(html, '<h1 class="maintenance__title">URL not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>') then
-      print("No comic exists at this ID; finishing successfully...")
-      return {} 
+      io.stdout:write("No comic exists at this ID; finishing successfully...\n")
+      io.stdout:flush()
+      return {}
     end
-    
+
     if string.match(html, '<h1 class="maintenance__title">') then
-      print("Encountered some error message on the page; SJ may be overloaded.")
+      io.stdout:write("Encountered some error message on the page; SJ may be overloaded.\n")
+      io.stdout:flush()
       abortgrab = true
       return {}
     end
-    
+
     -- These two actually give you the same thing if you don't use POST, from what I've observed, but that makes them fail in the WebRecorder player
     table.insert(urls, { url="https://www.smackjeeves.com/api/discover/articleList?titleNo=" .. item_value, post_data="titleNo=" .. item_value})
     table.insert(urls, { url="https://www.smackjeeves.com/api/discover/getCampaignInfo?titleNo=" .. item_value, post_data="titleNo=" .. item_value})
-    
+
     -- Cover image, if it exists
     -- Note this may also get covers of suggestions - this is fine, small size & I am not sure there is only one thumbnail size
     local title = string.match(html, '"(https://images%.smackjeeves%.com/legacy/title/[^"]+)"')
     if title then
       check(title)
     end
-    
+
     -- Try to capture redirects from old URLs
     check("http://www.smackjeeves.com/comicprofile.php?id=" .. item_value)
-    
+
     -- Note that not all of the subdomain redirects consist of the lowered, no-space title, but this seems like a good guess for a lot.
     local title = string.match(html, '<h1 class="article%-hero__ttl">([^<]+)</h1>')
     local subdomain = string.lower(string.gsub(title, '%W', ''))
     check("http://" .. subdomain .. ".thewebcomic.com/", true)
     check("http://" .. subdomain .. ".smackjeeves.com/", true)
   end
-  
+
   local function queue_comment_api_page(pagenum)
     if pages_covered[pagenum] == true then
       return
@@ -225,25 +229,29 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     table.insert(urls, { url="https://www.smackjeeves.com/api/comments/getAll", post_data="titleNo=" .. item_value .. "&articleNo=".. pagenum .. "&page=1&order=good" })
     pages_covered[pagenum] = true
   end
-  
+
   -- Individual page (in the print sense) of a comic
-  if string.match(url, "^https://www.smackjeeves.com/discover/detail%?titleNo=" .. item_value .. "&articleNo=[0-9]+$") and item_type == "comic" and status_code == 200 then
+  if string.match(url, "^https://www.smackjeeves.com/discover/detail%?titleNo=" .. item_value .. "&articleNo=[0-9]+$")
+    and item_type == "comic"
+    and status_code == 200 then
     html = read_file(file)
     local pagenum = string.match(url, "^https://www.smackjeeves.com/discover/detail%?titleNo=" .. item_value .. "&articleNo=([0-9]+)$")
     if pagenum == nil then
-      print("Pagenum is nil")
+      io.stdout:write("Pagenum is nil.\n")
+      io.stdout:flush()
       abortgrab = true
     end
-    
+
     if string.match(html, '<h1 class="maintenance__title">') then
-      print("Encountered some error message on the page; SJ may be overloaded.")
+      io.stdout:write("Encountered some error message on the page; SJ may be overloaded.\n")
+      io.stdout:flush()
       abortgrab = true
       return {}
     end
-    
+
     -- For whatever reason, when you click the forward/next buttons, it goes to one of the pages (without /discover/) that are queued as follows, which just redirects to the /discover/details page
     check("https://www.smackjeeves.com/detail?titleNo=" .. item_value .. "&articleNo=" .. pagenum, true)
-    
+
     local at_least_one_img_captured = false
     -- https://www.smackjeeves.com/discover/detail?titleNo=179756&articleNo=66 is a page with multiple images
     for image in string.gmatch(html, "'(https?://images%.smackjeeves%.com/[^']+/dims/optimize)'") do
@@ -253,29 +261,31 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       at_least_one_img_captured = true
     end
     if not at_least_one_img_captured then
-      print("No images found on this page; please save your logs (if possible) and contact OrIdow6; aborting.")
+      io.stdout:write("No images found on this page; please save your logs (if possible) and contact OrIdow6; aborting.\n")
+      io.stdout:flush()
       abortgrab = true
     end
-    
+
     -- Author profile picture & "recommended for you" covers
     for image in string.gmatch(html, 'background%-image:%s*url%(([^)(<>"]+)%)') do
-        check(image, true)
+      check(image, true)
     end
-    
+
     -- Separate comments page
     check("https://www.smackjeeves.com/comment/" .. item_value .. "/" .. pagenum, true)
     -- Comments API requests
     queue_comment_api_page(pagenum)
-    
+
     -- Just in case the article list isn't comprehensive for whatever reason...
     if pagenum ~= "1" then
-        local prevpn = tostring(tonumber(pagenum) - 1)
-        check("https://www.smackjeeves.com/discover/detail?titleNo=" .. item_value .. "&articleNo=" .. prevpn, true)
+      local prevpn = tostring(tonumber(pagenum) - 1)
+      check("https://www.smackjeeves.com/discover/detail?titleNo=" .. item_value .. "&articleNo=" .. prevpn, true)
     end
   end
-  
+
   -- Comment API requests
-  if item_type == "comic" and status_code == 200 and url == "https://www.smackjeeves.com/api/comments/getAll" then
+  if item_type == "comic" and status_code == 200
+    and url == "https://www.smackjeeves.com/api/comments/getAll" then
     html = read_file(file)
     local json = JSON:decode(html)
     if json["result"]["currentPageNo"] < json["result"]["totalPageCnt"] then
@@ -283,9 +293,11 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       queue_comment_api_page(next_page)
     end
   end
-  
+
   -- XHR list of comic pages
-  if item_type == "comic" and url == "https://www.smackjeeves.com/api/discover/articleList?titleNo=" .. item_value and status_code == 200 then
+  if item_type == "comic"
+    and url == "https://www.smackjeeves.com/api/discover/articleList?titleNo=" .. item_value
+    and status_code == 200 then
     html = read_file(file)
     local json = JSON:decode(html)
     for i, v in pairs(json["result"]["list"]) do
@@ -293,18 +305,21 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       check(v["imgUrl"], true)
     end
   end
-  
+
   -- Comment API pages - save avatars
-  if item_type == "comic" and url == "https://www.smackjeeves.com/api/comments/getAll"  and status_code == 200 then
+  if item_type == "comic"
+    and url == "https://www.smackjeeves.com/api/comments/getAll"
+    and status_code == 200 then
     html = read_file(file)
     local json = JSON:decode(html)
     for i, v in pairs(json["result"]["list"]) do
       check(v["imgUrl"], true)
     end
   end
-  
 
-  if allowed(url, nil) and status_code == 200 and not string.match(url, '^https?://images%.smackjeeves%.com') then
+
+  if allowed(url, nil) and status_code == 200
+    and not string.match(url, '^https?://images%.smackjeeves%.com') then
     html = read_file(file)
     for newurl in string.gmatch(string.gsub(html, "&quot;", '"'), '([^"]+)') do
       checknewurl(newurl)
@@ -331,11 +346,10 @@ end
 
 wget.callbacks.httploop_result = function(url, err, http_stat)
   status_code = http_stat["statcode"]
-  
+
   url_count = url_count + 1
   io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
   io.stdout:flush()
-
 
   if status_code >= 300 and status_code <= 399 then
     local newloc = urlparse.absolute(url["url"], http_stat["newloc"])
@@ -345,7 +359,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
       return wget.actions.EXIT
     end
   end
-  
+
   if status_code >= 200 and status_code <= 399 then
     downloaded[url["url"]] = true
   end

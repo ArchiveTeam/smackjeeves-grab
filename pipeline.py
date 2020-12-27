@@ -52,7 +52,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20201226.02'
+VERSION = '20201226.03'
 USER_AGENT = 'Archive Team'
 TRACKER_ID = 'smackjeeves'
 TRACKER_HOST = 'trackerproxy.archiveteam.org'
@@ -191,10 +191,10 @@ class WgetArgs(object):
 
         item['item_type'] = item_type
         item['item_value'] = item_value
-        
-        if item_type == "comic":
+
+        if item_type == 'comic':
             wget_args.extend(['--warc-header', 'smackjeeves-comic: ' + item_value])
-            
+
             # Debug
             #wget_args.append('https://resources.smackjeeves.com/js/articleDetailApp/app.1.0.0.min.js')
             #wget_args.append('https://resources.smackjeeves.com/css/main.v01.css')
@@ -209,10 +209,9 @@ class WgetArgs(object):
             #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-forward-white-double.png?1570429638')
             #wget_args.append('https://resources.smackjeeves.com/img/icon/icon-arrow-back-white-double.png?1570429638')
 
-            
             wget_args.append('https://www.smackjeeves.com/discover/articleList?titleNo={}'.format(item_value))
         elif item_type == "user":
-            raise NotImplementedError
+            raise NotImplementedError()
         else:
             raise ValueError('item_type not supported.')
 
@@ -236,7 +235,8 @@ project = Project(
     <img class="project-logo" alt="logo" src="https://www.archiveteam.org/images/Archiveteamsmall.png?959ea" height="50px"/>
     <h2>Smack Jeeves <span class="links"><a href="https://smackjeeves.com/">Website</a> &middot; <a href="http://tracker.archiveteam.org/smackjeeves/">Leaderboard</a></span></h2>
     ''',
-    utc_deadline = datetime.datetime.fromisoformat('2020-12-31 00:00:00+00:00')
+# may cause errors on different python versions.
+#    utc_deadline = datetime.datetime.fromisoformat('2020-12-31 00:00:00+00:00')
 )
 
 pipeline = Pipeline(
