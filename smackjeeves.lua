@@ -241,7 +241,24 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       io.stdout:flush()
       abortgrab = true
     end
+    
+    -- Problem we have encountered, does not seem to be ephemeral
+    if string.match(html, '<h1 class="maintenance__title">Internal server error</h1>') then
+      io.stdout:write("Encountered a broken comic page; skipping\n")
+      io.stdout:flush()
+      -- Navigation still good to have, even if it's navigation to a broken page
+      check("https://www.smackjeeves.com/detail?titleNo=" .. item_value .. "&articleNo=" .. pagenum, true)
 
+      -- Also do this thing
+      if pagenum ~= "1" then
+        local prevpn = tostring(tonumber(pagenum) - 1)
+        check("https://www.smackjeeves.com/discover/detail?titleNo=" .. item_value .. "&articleNo=" .. prevpn, true)
+      end
+
+      return urls
+    end
+
+    -- If there is an error but it is not "Internal server error", do the same thing as before
     if string.match(html, '<h1 class="maintenance__title">') then
       io.stdout:write("Encountered some error message on the page; SJ may be overloaded.\n")
       io.stdout:flush()
@@ -368,6 +385,12 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:write("ABORTING...\n")
     io.stdout:flush()
     return wget.actions.ABORT
+  end
+  
+  if status_code == 403 and string.match(url["url"], "^https?://images%.smackjeeves%.com/article/%d+/%d+/%d+/[%d_]+.*") then
+    io.stdout:write("Encountered a broken comic image; skipping\n")
+    io.stdout:flush()
+    return wget.actions.EXIT
   end
 
   if status_code == 0
