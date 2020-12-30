@@ -185,7 +185,8 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     and status_code == 200 then
     html = read_file(file)
 
-    if string.match(html, '<h1 class="maintenance__title">URL not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>') then
+    if string.match(html, '<h1 class="maintenance__title">URL not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>')
+      or string.match(html, '<h1 class="maintenance__title">Data not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>') then
       io.stdout:write("No comic exists at this ID; finishing successfully...\n")
       io.stdout:flush()
       return {}
@@ -241,7 +242,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       io.stdout:flush()
       abortgrab = true
     end
-    
+
     -- Problem we have encountered, does not seem to be ephemeral
     if string.match(html, '<h1 class="maintenance__title">Internal server error</h1>') then
       io.stdout:write("Encountered a broken comic page; skipping\n")
@@ -386,7 +387,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:flush()
     return wget.actions.ABORT
   end
-  
+
   if status_code == 403 and string.match(url["url"], "^https?://images%.smackjeeves%.com/article/%d+/%d+/%d+/[%d_]+.*") then
     io.stdout:write("Encountered a broken comic image; skipping\n")
     io.stdout:flush()
