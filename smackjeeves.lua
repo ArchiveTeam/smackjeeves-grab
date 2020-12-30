@@ -55,7 +55,18 @@ allowed = function(url, parenturl)
     or string.match(url, "^https?://www%.smackjeeves%.com/bookshelf")
     or string.match(url, "^https?://www%.smackjeeves%.com/comment/report")
     or string.match(url, "^https?://www%.smackjeeves%.com/settings")
-    or string.match(url, "^https?://www%.smackjeeves%.com/author/%d+") then
+    or (item_type == "comic" and
+        string.match(url, "^https?://www%.smackjeeves%.com/author/%d+"))
+    or (item_type == "user" and
+       string.match(url, "^https?://www%.smackjeeves%.com/discover/detail")
+       or string.match(url, "^https?://www%.smackjeeves%.com/discover/articleList") ) then
+    return false
+  end
+
+  -- Do not match other users
+  if item_type == "user"
+    and string.match(url, "^https?://www%.smackjeeves%.com/author/[%d]+$")
+    and url ~= "https://www.smackjeeves.com/author/" .. item_value then
     return false
   end
 
@@ -333,6 +344,35 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     local json = JSON:decode(html)
     for i, v in pairs(json["result"]["list"]) do
       check(v["imgUrl"], true)
+    end
+  end
+
+  if item_type == "user" and status_code == 200 then
+    -- Main user page
+    if url == "https://www.smackjeeves.com/author/" .. item_value then
+      html = read_file(file)
+
+      if string.match(html, '<h1 class="maintenance__title">URL not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>')
+        or string.match(html, '<h1 class="maintenance__title">Data not found</h1>[%s%c]+<p class="maintenance__lead">Please, try again later%.</p>') then
+          io.stdout:write("No user exists at this ID; finishing successfully...\n")
+          io.stdout:flush()
+          return {}
+      elseif string.match(html, '<h1 class="maintenance__title">') then
+        io.stdout:write("Encountered some non-\"not found\" error message on the page\n")
+        io.stdout:flush()
+        abortgrab = true
+        return {}
+      end
+
+      table.insert(urls, { url="https://www.smackjeeves.com/api/author/profile", post_data="authorId=" .. item_value})
+    end
+
+    if url == "https://www.smackjeeves.com/api/author/profile" then
+      html = read_file(file)
+      local json = JSON:decode(html)
+      for i, v in pairs(json["result"]["list"]) do
+        check(v["imgUrl"])
+      end
     end
   end
 
