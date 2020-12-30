@@ -129,7 +129,8 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     url_ = string.match(url_, "^(.-)&?$")
     url_ = string.match(url_, "^(.-)/?$")
     if (downloaded[url_] ~= true and addedtolist[url_] ~= true)
-      and (allowed(url_, origurl) or force) then
+      and (allowed(url_, origurl) or force)
+      and not string.match(url, "FUCKING") then
       table.insert(urls, { url=url_ })
       addedtolist[url_] = true
       addedtolist[url] = true
