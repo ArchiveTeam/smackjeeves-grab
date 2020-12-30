@@ -395,6 +395,16 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     return wget.actions.EXIT
   end
 
+  -- As far as I can tell, the only situation whatsoever where this site (& not their images domain, which is S3)
+  -- returns a non-200 is on this one specific comic ("Dream Manga"), when you have a page number over 5000
+  if status_code == 500
+    and item_type == "comic"
+    and item_value == "79290" then
+      io.stdout:write("Skipping\n")
+      io.stdout:flush()
+      return wget.actions.EXIT
+    end
+
   if status_code == 0
     or (status_code > 400 and status_code ~= 404) then
     io.stdout:write("Server returned " .. http_stat.statcode .. " (" .. err .. "). Sleeping.\n")
